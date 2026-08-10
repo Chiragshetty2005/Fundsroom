@@ -6,3 +6,159 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  ADMIN
+  SALES
+  WAREHOUSE
+  ACCOUNTS
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+  DISTRIBUTOR
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum StockMovementType {
+  IN
+  OUT
+}
+
+enum ChallanStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id               String             @id @default(uuid()) @db.Uuid
+  name             String
+  email            String             @unique
+  passwordHash     String
+  role             Role               @default(SALES)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  createdFollowUps CustomerFollowUp[]
+  createdChallans  SalesChallan[]
+  stockMovements   StockMovement[]
+}
+
+model Customer {
+  id           String             @id @default(uuid()) @db.Uuid
+  name         String
+  mobile       String
+  email        String
+  businessName String
+  gstNumber    String?
+  type         CustomerType
+  status       CustomerStatus     @default(LEAD)
+  address      String
+  followUpDate DateTime?
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  followUps    CustomerFollowUp[]
+  challans     SalesChallan[]
+
+  @@index([name])
+  @@index([mobile])
+  @@index([status, followUpDate])
+}
+
+model CustomerFollowUp {
+  id               String    @id @default(uuid()) @db.Uuid
+  customerId       String    @db.Uuid
+  createdById      String    @db.Uuid
+  note             String
+  nextFollowUpDate DateTime?
+  createdAt        DateTime  @default(now())
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdBy        User      @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([customerId, createdAt])
+}
+
+model Product {
+  id                        String             @id @default(uuid()) @db.Uuid
+  name                      String
+  sku                       String             @unique
+  category                  String
+  unitPrice                 Decimal            @db.Decimal(12, 2)
+  currentStock              Int                @default(0)
+  minimumStockAlertQuantity Int
+  warehouseLocation         String
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+  stockMovements            StockMovement[]
+  challanItems              SalesChallanItem[]
+
+  @@index([name])
+  @@index([category])
+  @@index([currentStock, minimumStockAlertQuantity])
+}
+
+model StockMovement {
+  id          String            @id @default(uuid()) @db.Uuid
+  productId   String            @db.Uuid
+  createdById String            @db.Uuid
+  challanId   String?           @db.Uuid
+  quantity    Int
+  type        StockMovementType
+  reason      String
+  createdAt   DateTime          @default(now())
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  createdBy   User              @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  challan     SalesChallan?     @relation(fields: [challanId], references: [id], onDelete: SetNull)
+
+  @@index([productId, createdAt])
+  @@index([challanId])
+}
+
+model SalesChallan {
+  id             String             @id @default(uuid()) @db.Uuid
+  challanNumber  String             @unique
+  customerId     String             @db.Uuid
+  createdById    String             @db.Uuid
+  totalQuantity  Int                @default(0)
+  status         ChallanStatus      @default(DRAFT)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
+  customer       Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  createdBy      User               @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  items          SalesChallanItem[]
+  stockMovements StockMovement[]
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model SalesChallanItem {
+  id          String       @id @default(uuid()) @db.Uuid
+  challanId   String       @db.Uuid
+  productId   String       @db.Uuid
+  productName String
+  productSku  String
+  unitPrice   Decimal      @db.Decimal(12, 2)
+  quantity    Int
+  createdAt   DateTime     @default(now())
+  challan     SalesChallan @relation(fields: [challanId], references: [id], onDelete: Cascade)
+  product     Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([challanId])
+  @@index([productId])
+}
+
+model ChallanSequence {
+  id        Int      @id @default(1)
+  nextValue Int      @default(1)
+  updatedAt DateTime @updatedAt
+}

@@ -10,12 +10,12 @@ Set up the executable foundation for the case-study portal before implementing b
 
 ## Settled initial choices
 
-| Area              | Choice                                    | Reason                                                                                                |
-| ----------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Repository layout | npm workspaces: `apps/web` and `apps/api` | Keeps the React UI and Express API independently deployable while sharing one developer workflow.     |
-| API               | Express + TypeScript                      | Fast to implement within the assignment while retaining typed boundaries and middleware support.      |
-| Database          | PostgreSQL + Prisma                       | Supports relational operations and will allow transactional challan confirmation and stock movements. |
-| Local services    | Docker Compose PostgreSQL                 | Gives reviewers a reproducible database without requiring a paid hosted service.                      |
+| Area              | Choice                                    | Reason                                                                                                              |
+| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Repository layout | npm workspaces: `apps/web` and `apps/api` | Keeps the React UI and Express API independently deployable while sharing one developer workflow.                   |
+| API               | Express + TypeScript                      | Fast to implement within the assignment while retaining typed boundaries and middleware support.                    |
+| Database          | PostgreSQL + Prisma                       | Supports relational operations and will allow transactional challan confirmation and stock movements.               |
+| Local services    | Locally installed PostgreSQL              | Matches the current development requirement while preserving a host-based configuration for later containerization. |
 
 ## Initial deliverables
 
@@ -30,8 +30,8 @@ Set up the executable foundation for the case-study portal before implementing b
 - `npm run build` passes for both applications.
 - `npm run check` passes for both applications.
 - `npm run format:check` passes.
-- The API responds successfully at `GET /api/health` when started with the documented environment variables.
+- The API starts only after a successful PostgreSQL connection; an unavailable database returns a clear startup error.
 
 ## Next implementation boundaries
 
-Authentication/roles, database models/migrations, customer CRM, inventory, and challans remain intentionally unimplemented.
+Authentication APIs, customer CRM operations, inventory operations, and challan operations remain intentionally unimplemented.
