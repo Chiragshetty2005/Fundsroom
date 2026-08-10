@@ -20,7 +20,6 @@ export const InventoryPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [typeFilter, setTypeFilter] = useState<string>('');
 
-  // Adjustment Modal
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [adjustData, setAdjustData] = useState({
     productId: '',
@@ -85,7 +84,7 @@ export const InventoryPage: React.FC = () => {
   const handleSaveAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adjustData.reason.trim() || adjustData.reason.trim().length < 3) {
-      showToast('Please provide a specific adjustment reason (min 3 chars).', 'error');
+      showToast('Provide a specific adjustment reason (minimum 3 characters).', 'error');
       return;
     }
 
@@ -97,7 +96,7 @@ export const InventoryPage: React.FC = () => {
         type: adjustData.type,
         reason: adjustData.reason.trim(),
       });
-      showToast('Inventory adjusted & audit movement logged!', 'success');
+      showToast('Stock adjusted and movement logged.', 'success');
       setIsAdjustOpen(false);
       loadMovements();
       loadProductOptions();
@@ -110,59 +109,45 @@ export const InventoryPage: React.FC = () => {
 
   return (
     <div>
-      {/* Action Header */}
       <div className="action-bar">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            Stock Movement Ledger
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Complete auditable ledger of all inventory intake, write-offs, and sales deductions
-          </p>
+          <h1 className="page-title">Inventory</h1>
+          <p className="page-subtitle">Stock movement ledger and manual adjustments</p>
         </div>
 
         {hasRole('ADMIN', 'WAREHOUSE') && (
           <button className="btn btn-primary" onClick={handleOpenAdjust}>
-            <PlusIcon size={18} />
-            <span>Manual Stock Adjustment</span>
+            <PlusIcon size={16} />
+            <span>Adjust stock</span>
           </button>
         )}
       </div>
 
-      {/* Filter Bar */}
-      <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            className={`btn btn-sm ${!typeFilter ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => {
-              setTypeFilter('');
-              setPage(1);
-            }}
-          >
-            All Movements
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${typeFilter === 'IN' ? 'btn-success' : 'btn-secondary'}`}
-            onClick={() => {
-              setTypeFilter('IN');
-              setPage(1);
-            }}
-          >
-            + IN Movements
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${typeFilter === 'OUT' ? 'btn-danger' : 'btn-secondary'}`}
-            onClick={() => {
-              setTypeFilter('OUT');
-              setPage(1);
-            }}
-          >
-            - OUT Movements
-          </button>
-        </div>
+      {/* Filter tabs */}
+      <div className="filter-bar">
+        <button
+          type="button"
+          className={`filter-toggle ${!typeFilter ? 'active' : ''}`}
+          onClick={() => { setTypeFilter(''); setPage(1); }}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`filter-toggle ${typeFilter === 'IN' ? 'active' : ''}`}
+          onClick={() => { setTypeFilter('IN'); setPage(1); }}
+          style={{ color: typeFilter === 'IN' ? 'var(--success-text)' : undefined }}
+        >
+          IN
+        </button>
+        <button
+          type="button"
+          className={`filter-toggle ${typeFilter === 'OUT' ? 'active' : ''}`}
+          onClick={() => { setTypeFilter('OUT'); setPage(1); }}
+          style={{ color: typeFilter === 'OUT' ? 'var(--danger-text)' : undefined }}
+        >
+          OUT
+        </button>
       </div>
 
       {/* Movement Table */}
@@ -171,45 +156,41 @@ export const InventoryPage: React.FC = () => {
           <thead>
             <tr>
               <th>Timestamp</th>
-              <th>Product & SKU</th>
+              <th>Product</th>
               <th>Type</th>
-              <th>Quantity</th>
-              <th>Recorded By</th>
-              <th>Reason / Linked Challan</th>
+              <th>Qty</th>
+              <th>Recorded by</th>
+              <th>Reason</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  Loading stock movement audit history...
+                <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  Loading...
                 </td>
               </tr>
             ) : movements.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  No stock movements recorded yet.
+                <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  {typeFilter
+                    ? `No ${typeFilter} movements found.`
+                    : 'No stock movements recorded yet. Use "Adjust stock" to log the first entry.'}
                 </td>
               </tr>
             ) : (
               movements.map((m) => (
                 <tr key={m.id}>
                   <td>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <span className="tabular" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {new Date(m.createdAt).toLocaleString()}
                     </span>
                   </td>
                   <td>
-                    <strong style={{ color: '#fff', fontSize: '0.925rem', display: 'block' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>
                       {m.product?.name}
-                    </strong>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.75rem',
-                        color: 'var(--text-accent)',
-                      }}
-                    >
+                    </div>
+                    <span className="mono" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {m.product?.sku}
                     </span>
                   </td>
@@ -218,25 +199,25 @@ export const InventoryPage: React.FC = () => {
                   </td>
                   <td>
                     <span
+                      className="tabular"
                       style={{
-                        fontWeight: 800,
-                        fontSize: '1rem',
-                        color: m.type === 'IN' ? '#34d399' : '#f87171',
+                        fontWeight: 600,
+                        color: m.type === 'IN' ? 'var(--success-text)' : 'var(--danger-text)',
                       }}
                     >
-                      {m.type === 'IN' ? '+' : '-'}{m.quantity} units
+                      {m.type === 'IN' ? '+' : '-'}{m.quantity}
                     </span>
                   </td>
                   <td>
-                    <div>{m.createdBy?.name}</div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '13px' }}>{m.createdBy?.name}</div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {m.createdBy?.email}
                     </span>
                   </td>
                   <td>
-                    <div style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>{m.reason}</div>
+                    <div style={{ fontSize: '13px' }}>{m.reason}</div>
                     {m.challan && (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                      <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 500 }}>
                         Linked to #{m.challan.challanNumber}
                       </span>
                     )}
@@ -259,11 +240,11 @@ export const InventoryPage: React.FC = () => {
       <Modal
         isOpen={isAdjustOpen}
         onClose={() => setIsAdjustOpen(false)}
-        title="Manual Stock Adjustment (Warehouse)"
+        title="Adjust stock"
       >
         <form onSubmit={handleSaveAdjustment}>
           <div className="form-group">
-            <label className="form-label">Select Product *</label>
+            <label className="form-label">Product</label>
             <select
               className="form-select"
               required
@@ -272,27 +253,27 @@ export const InventoryPage: React.FC = () => {
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku}) — Available: {p.currentStock} units
+                  {p.name} ({p.sku}) — {p.currentStock} in stock
                 </option>
               ))}
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <div className="form-group">
-              <label className="form-label">Movement Direction *</label>
+              <label className="form-label">Direction</label>
               <select
                 className="form-select"
                 value={adjustData.type}
                 onChange={(e) => setAdjustData({ ...adjustData, type: e.target.value as StockMovementType })}
               >
-                <option value="IN">+ IN (Restock / Intake)</option>
-                <option value="OUT">- OUT (Damage / Write-off / Audit Correction)</option>
+                <option value="IN">IN (restock)</option>
+                <option value="OUT">OUT (write-off / correction)</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Adjustment Quantity *</label>
+              <label className="form-label">Quantity</label>
               <input
                 type="number"
                 min="1"
@@ -305,14 +286,14 @@ export const InventoryPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Mandatory Audit Reason *</label>
+            <label className="form-label">Reason</label>
             <textarea
               className="form-textarea"
               required
               rows={3}
               value={adjustData.reason}
               onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })}
-              placeholder="e.g. Received shipment from Supplier XYZ / Damaged during forklift transit / Periodic physical count correction"
+              placeholder="Received shipment from supplier / Damaged during transit / Physical count correction"
             />
           </div>
 
@@ -325,7 +306,7 @@ export const InventoryPage: React.FC = () => {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Applying Adjustment...' : 'Apply Stock Change'}
+              {submitting ? 'Applying...' : 'Apply adjustment'}
             </button>
           </div>
         </form>

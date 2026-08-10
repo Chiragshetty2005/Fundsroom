@@ -51,7 +51,7 @@ export const CreateChallanPage: React.FC = () => {
           ]);
         }
       } catch (error: any) {
-        showToast(error.message || 'Failed to load master records.', 'error');
+        showToast(error.message || 'Failed to load data.', 'error');
       }
     }
 
@@ -110,7 +110,7 @@ export const CreateChallanPage: React.FC = () => {
 
   const handleRemoveLineItem = (index: number) => {
     if (items.length <= 1) {
-      showToast('A sales challan must contain at least one line item.', 'error');
+      showToast('A challan must have at least one line item.', 'error');
       return;
     }
     setItems((prev) => prev.filter((_, i) => i !== index));
@@ -121,12 +121,12 @@ export const CreateChallanPage: React.FC = () => {
 
   const handleSubmit = async (status: ChallanStatus) => {
     if (!selectedCustomerId) {
-      showToast('Please select a customer.', 'error');
+      showToast('Select a customer.', 'error');
       return;
     }
 
     if (items.length === 0) {
-      showToast('Please add at least one product item.', 'error');
+      showToast('Add at least one product item.', 'error');
       return;
     }
 
@@ -145,13 +145,13 @@ export const CreateChallanPage: React.FC = () => {
       const res = await api.post<{ challan: SalesChallan }>('/challans', payload);
       showToast(
         status === 'CONFIRMED'
-          ? `Challan #${res.challan.challanNumber} issued & stock deducted!`
-          : `Draft Challan #${res.challan.challanNumber} saved.`,
+          ? `Challan ${res.challan.challanNumber} confirmed and stock deducted.`
+          : `Draft challan ${res.challan.challanNumber} saved.`,
         'success',
       );
       navigate(`/challans/${res.challan.id}`);
     } catch (error: any) {
-      showToast(error.message || 'Failed to create sales challan.', 'error');
+      showToast(error.message || 'Failed to create challan.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,33 +161,25 @@ export const CreateChallanPage: React.FC = () => {
 
   return (
     <div>
-      {/* Header */}
       <div className="action-bar">
         <div>
-          <Link
-            to="/challans"
-            style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}
-          >
-            &larr; Back to Challan List
+          <Link to="/challans" className="back-link">
+            &larr; Sales Challans
           </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            New Sales Challan Generator
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Draft or issue customer dispatch challans with real-time inventory validation
-          </p>
+          <h1 className="page-title">New challan</h1>
+          <p className="page-subtitle">Create a delivery challan with inventory validation</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Left Column: Form & Line Item Builder */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Customer Selection Card */}
-          <div className="glass-card">
-            <h2 className="card-title" style={{ marginBottom: '1rem' }}>1. Customer & Dispatch Destination</h2>
-            
-            <div className="form-group">
-              <label className="form-label">Select Customer Account *</label>
+      <div className="detail-grid">
+        {/* Left: form and line items */}
+        <div className="detail-section">
+          {/* Customer selection */}
+          <div className="card">
+            <h2 className="card-title" style={{ marginBottom: '12px' }}>Customer</h2>
+
+            <div className="form-group" style={{ marginBottom: '8px' }}>
+              <label className="form-label">Select customer</label>
               <select
                 className="form-select"
                 value={selectedCustomerId}
@@ -204,46 +196,45 @@ export const CreateChallanPage: React.FC = () => {
             {selectedCustomer && (
               <div
                 style={{
-                  marginTop: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  background: 'var(--bg-input)',
+                  padding: '10px 12px',
+                  background: 'var(--bg-secondary)',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: '0.85rem',
+                  fontSize: '13px',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '0.75rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '8px',
                 }}
               >
                 <div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>Delivery Address</span>
-                  <strong>{selectedCustomer.address}</strong>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px', display: 'block' }}>Address</span>
+                  <span style={{ fontWeight: 500 }}>{selectedCustomer.address}</span>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>Contact Phone</span>
-                  <strong>{selectedCustomer.mobile}</strong>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px', display: 'block' }}>Phone</span>
+                  <span style={{ fontWeight: 500 }}>{selectedCustomer.mobile}</span>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>GST Identification</span>
-                  <span>{selectedCustomer.gstNumber || 'Unregistered'}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px', display: 'block' }}>GST</span>
+                  <span style={{ fontWeight: 500 }}>{selectedCustomer.gstNumber || 'Unregistered'}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Line Items Card */}
-          <div className="glass-card">
+          {/* Line items */}
+          <div className="card">
             <div className="card-header">
               <div>
-                <h2 className="card-title">2. Order Line Items</h2>
-                <p className="card-subtitle">Add products and quantities for this shipment</p>
+                <h2 className="card-title">Line items</h2>
+                <p className="card-subtitle">Add products and quantities</p>
               </div>
               <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddLineItem}>
-                <PlusIcon size={16} />
-                <span>Add Product</span>
+                <PlusIcon size={14} />
+                <span>Add item</span>
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {items.map((item, index) => {
                 const prod = products.find((p) => p.id === item.productId);
                 const hasStock = prod ? prod.currentStock >= item.quantity : true;
@@ -252,19 +243,18 @@ export const CreateChallanPage: React.FC = () => {
                   <div
                     key={item.id}
                     style={{
-                      background: 'var(--bg-input)',
-                      border: `1px solid ${hasStock ? 'var(--border-subtle)' : 'var(--danger-border)'}`,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
                       borderRadius: 'var(--radius-md)',
-                      padding: '1rem',
+                      padding: '12px',
                       display: 'grid',
-                      gridTemplateColumns: 'minmax(200px, 2fr) 100px 120px 100px 40px',
-                      gap: '0.85rem',
-                      alignItems: 'center',
+                      gridTemplateColumns: 'minmax(180px, 2fr) 80px 100px 80px 32px',
+                      gap: '10px',
+                      alignItems: 'end',
                     }}
                   >
-                    {/* Product Selector */}
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Product Item</label>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Product</label>
                       <select
                         className="form-select"
                         value={item.productId}
@@ -277,19 +267,18 @@ export const CreateChallanPage: React.FC = () => {
                         ))}
                       </select>
                       {prod && (
-                        <div style={{ fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                          <span style={{ color: hasStock ? '#34d399' : '#f87171', fontWeight: 600 }}>
+                        <div style={{ fontSize: '11px', marginTop: '4px' }}>
+                          <span style={{ color: hasStock ? 'var(--success-text)' : 'var(--danger-text)', fontWeight: 500 }}>
                             {hasStock
-                              ? `✓ Available in Stock: ${prod.currentStock} units`
-                              : `⚠️ Exceeds Available Stock (${prod.currentStock} available)`}
+                              ? `${prod.currentStock} available`
+                              : `Exceeds stock (${prod.currentStock} available)`}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Quantity */}
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Quantity</label>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Qty</label>
                       <input
                         type="number"
                         min="1"
@@ -299,9 +288,8 @@ export const CreateChallanPage: React.FC = () => {
                       />
                     </div>
 
-                    {/* Unit Price */}
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Unit Price ($)</label>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Unit price ($)</label>
                       <input
                         type="number"
                         step="0.01"
@@ -312,25 +300,22 @@ export const CreateChallanPage: React.FC = () => {
                       />
                     </div>
 
-                    {/* Line Subtotal */}
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Subtotal</label>
-                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', paddingTop: '0.4rem' }}>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Subtotal</label>
+                      <div className="tabular" style={{ fontWeight: 600, paddingTop: '8px', fontSize: '13px' }}>
                         ${(item.quantity * item.unitPrice).toFixed(2)}
                       </div>
                     </div>
 
-                    {/* Remove Action */}
-                    <div style={{ paddingTop: '1.25rem' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-icon"
-                        onClick={() => handleRemoveLineItem(index)}
-                        title="Remove Line Item"
-                      >
-                        <TrashIcon size={16} />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-icon"
+                      onClick={() => handleRemoveLineItem(index)}
+                      title="Remove line item"
+                      style={{ marginBottom: '2px' }}
+                    >
+                      <TrashIcon size={14} />
+                    </button>
                   </div>
                 );
               })}
@@ -338,53 +323,53 @@ export const CreateChallanPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Order Summary & Execution */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '90px' }}>
-          <div className="glass-card">
-            <h2 className="card-title" style={{ marginBottom: '1.25rem' }}>Challan Summary</h2>
+        {/* Right rail: summary */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '76px' }}>
+          <div className="card">
+            <h2 className="card-title" style={{ marginBottom: '16px' }}>Summary</h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Total Product Lines</span>
-                <strong>{items.length} items</strong>
+                <span style={{ color: 'var(--text-secondary)' }}>Line items</span>
+                <span className="tabular" style={{ fontWeight: 600 }}>{items.length}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Total Dispatch Units</span>
-                <strong style={{ color: '#fff' }}>{totalQuantity} units</strong>
+                <span style={{ color: 'var(--text-secondary)' }}>Total units</span>
+                <span className="tabular" style={{ fontWeight: 600 }}>{totalQuantity}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>Total Value</span>
-                <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+                <span style={{ fontWeight: 600 }}>Total value</span>
+                <span className="tabular" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent)' }}>
                   ${grandTotal.toFixed(2)}
                 </span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 type="button"
                 className="btn btn-success"
                 disabled={isSubmitting}
-                style={{ width: '100%', padding: '0.85rem' }}
+                style={{ width: '100%', padding: '10px' }}
                 onClick={() => handleSubmit('CONFIRMED')}
               >
-                {isSubmitting ? 'Processing...' : '✓ Confirm & Deduct Stock'}
+                {isSubmitting ? 'Processing...' : 'Confirm challan'}
               </button>
 
               <button
                 type="button"
                 className="btn btn-secondary"
                 disabled={isSubmitting}
-                style={{ width: '100%', padding: '0.75rem' }}
+                style={{ width: '100%', padding: '8px' }}
                 onClick={() => handleSubmit('DRAFT')}
               >
-                Save as Draft
+                Save as draft
               </button>
             </div>
 
-            <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
-              * <strong>Confirm</strong> verifies stock atomically and immediately creates OUT movement records in the inventory ledger.
-            </div>
+            <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Confirming verifies stock atomically and creates OUT movement records in the inventory ledger.
+            </p>
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ export const ChallanDetailPage: React.FC = () => {
       const res = await api.get<{ challan: SalesChallan }>(`/challans/${id}`);
       setChallan(res.challan);
     } catch (error: any) {
-      showToast(error.message || 'Failed to load sales challan.', 'error');
+      showToast(error.message || 'Failed to load challan.', 'error');
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,7 @@ export const ChallanDetailPage: React.FC = () => {
     setActionLoading(true);
     try {
       await api.post(`/challans/${id}/confirm`);
-      showToast(`Challan #${challan?.challanNumber} confirmed & stock deducted!`, 'success');
+      showToast(`Challan ${challan?.challanNumber} confirmed.`, 'success');
       loadChallan();
     } catch (error: any) {
       showToast(error.message || 'Failed to confirm challan.', 'error');
@@ -49,12 +49,12 @@ export const ChallanDetailPage: React.FC = () => {
 
   const handleCancel = async () => {
     if (!id) return;
-    if (!window.confirm('Are you sure you want to cancel this draft challan?')) return;
+    if (!window.confirm('Cancel this draft challan? This action cannot be undone.')) return;
 
     setActionLoading(true);
     try {
       await api.post(`/challans/${id}/cancel`);
-      showToast(`Challan #${challan?.challanNumber} has been cancelled.`, 'info');
+      showToast(`Challan ${challan?.challanNumber} cancelled.`, 'info');
       loadChallan();
     } catch (error: any) {
       showToast(error.message || 'Failed to cancel challan.', 'error');
@@ -65,18 +65,18 @@ export const ChallanDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-        Loading sales challan details...
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)', fontSize: '14px' }}>
+        Loading...
       </div>
     );
   }
 
   if (!challan) {
     return (
-      <div style={{ textAlign: 'center', padding: '4rem' }}>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Sales challan not found.</p>
+      <div style={{ textAlign: 'center', padding: '60px' }}>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>Challan not found.</p>
         <Link to="/challans" className="btn btn-secondary">
-          Return to Challans List
+          Back to challans
         </Link>
       </div>
     );
@@ -90,24 +90,21 @@ export const ChallanDetailPage: React.FC = () => {
       {/* Top Action Bar (hidden on print) */}
       <div className="action-bar no-print">
         <div>
-          <Link
-            to="/challans"
-            style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}
-          >
-            &larr; Back to Challan List
+          <Link to="/challans" className="back-link">
+            &larr; Sales Challans
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-              Challan #{challan.challanNumber}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1 className="page-title">
+              <span className="mono">{challan.challanNumber}</span>
             </h1>
             <Badge type="challan-status" value={challan.status} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn btn-secondary" onClick={() => window.print()}>
-            <PrinterIcon size={18} />
-            <span>Print Official Slip</span>
+            <PrinterIcon size={14} />
+            <span>Print</span>
           </button>
 
           {hasRole('ADMIN', 'SALES') && challan.status === 'DRAFT' && (
@@ -117,14 +114,14 @@ export const ChallanDetailPage: React.FC = () => {
                 onClick={handleConfirm}
                 disabled={actionLoading}
               >
-                {actionLoading ? 'Processing...' : '✓ Confirm & Issue'}
+                {actionLoading ? 'Processing...' : 'Confirm challan'}
               </button>
               <button
                 className="btn btn-danger btn-sm"
                 onClick={handleCancel}
                 disabled={actionLoading}
               >
-                Cancel Draft
+                Cancel draft
               </button>
             </>
           )}
@@ -132,108 +129,63 @@ export const ChallanDetailPage: React.FC = () => {
       </div>
 
       {/* Official Formatted Delivery Challan Slip */}
-      <div
-        className="glass-card printable-slip"
-        style={{
-          maxWidth: '860px',
-          margin: '0 auto',
-          padding: '2.5rem',
-          background: '#0f172a',
-          color: '#fff',
-        }}
-      >
+      <div className="printable-slip">
         {/* Document Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            paddingBottom: '1.5rem',
-            borderBottom: '2px solid var(--border-subtle)',
-            marginBottom: '2rem',
-          }}
-        >
+        <div className="slip-header">
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#fff' }}>
-              MINI ERP WHOLESALE & DISTRIBUTION
-            </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-              Commercial Operations & Delivery Network &bull; GSTIN: 29AAAAA0000A1Z5
-            </div>
+            <div className="slip-company">MINI ERP WHOLESALE & DISTRIBUTION</div>
+            <div className="slip-company-sub">Commercial Operations · GSTIN: 29AAAAA0000A1Z5</div>
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <div
-              style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                color: 'var(--text-accent)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              DELIVERY CHALLAN
+            <div className="slip-doc-type">DELIVERY CHALLAN</div>
+            <div className="mono" style={{ fontSize: '14px', fontWeight: 600, marginTop: '4px' }}>
+              {challan.challanNumber}
             </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>
-              #{challan.challanNumber}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Date: {new Date(challan.createdAt).toLocaleDateString()}
+            <div className="tabular" style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {new Date(challan.createdAt).toLocaleDateString()}
             </div>
           </div>
         </div>
 
-        {/* Bill/Ship To Meta Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '2rem',
-            marginBottom: '2rem',
-            padding: '1.25rem',
-            background: 'var(--bg-input)',
-            borderRadius: 'var(--radius-md)',
-          }}
-        >
+        {/* Meta Grid */}
+        <div className="slip-meta-grid">
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Consignee / Customer Details
-            </span>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.35rem' }}>
+            <div className="slip-meta-label">Customer</div>
+            <div style={{ fontSize: '15px', fontWeight: 600, marginTop: '4px' }}>
               {challan.customer?.name}
             </div>
-            <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
               {challan.customer?.businessName}
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-              📍 {challan.customer?.address}
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              {challan.customer?.address}
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-              📞 {challan.customer?.mobile} &bull; ✉️ {challan.customer?.email}
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {challan.customer?.mobile} · {challan.customer?.email}
             </div>
             {challan.customer?.gstNumber && (
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-accent)', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '12px', color: 'var(--accent)', marginTop: '4px', fontWeight: 500 }}>
                 GSTIN: {challan.customer.gstNumber}
               </div>
             )}
           </div>
 
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Dispatch & Authorization Details
-            </span>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <div className="slip-meta-label">Dispatch Details</div>
+            <div style={{ marginTop: '6px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Created By: </span>
-                <strong>{challan.createdBy?.name} ({challan.createdBy?.role})</strong>
+                <span style={{ color: 'var(--text-muted)' }}>Created by: </span>
+                <span style={{ fontWeight: 500 }}>{challan.createdBy?.name} ({challan.createdBy?.role})</span>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Fulfillment Status: </span>
+                <span style={{ color: 'var(--text-muted)' }}>Status: </span>
                 <Badge type="challan-status" value={challan.status} />
               </div>
               {challan.confirmedAt && (
                 <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Confirmed At: </span>
-                  <span style={{ color: '#34d399', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Confirmed: </span>
+                  <span className="tabular" style={{ color: 'var(--success-text)', fontWeight: 500 }}>
                     {new Date(challan.confirmedAt).toLocaleString()}
                   </span>
                 </div>
@@ -242,15 +194,15 @@ export const ChallanDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Itemized Snapshot Table */}
-        <div style={{ marginBottom: '2rem' }}>
+        {/* Itemized Table */}
+        <div style={{ marginBottom: '24px' }}>
           <table className="data-table" style={{ width: '100%' }}>
             <thead>
               <tr>
                 <th style={{ width: '40px' }}>#</th>
-                <th>Item Description</th>
-                <th>SKU Code</th>
-                <th style={{ textAlign: 'right' }}>Unit Price</th>
+                <th>Item</th>
+                <th>SKU</th>
+                <th style={{ textAlign: 'right' }}>Unit price</th>
                 <th style={{ textAlign: 'center' }}>Qty</th>
                 <th style={{ textAlign: 'right' }}>Amount</th>
               </tr>
@@ -258,62 +210,66 @@ export const ChallanDetailPage: React.FC = () => {
             <tbody>
               {challan.items?.map((item, idx) => (
                 <tr key={item.id}>
-                  <td>{idx + 1}</td>
+                  <td className="tabular">{idx + 1}</td>
                   <td>
-                    <strong style={{ color: '#fff' }}>{item.productName}</strong>
+                    <span style={{ fontWeight: 500 }}>{item.productName}</span>
                   </td>
                   <td>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                    <span className="mono" style={{ fontSize: '12px' }}>
                       {item.productSku}
                     </span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    ${Number(item.unitPrice).toFixed(2)}
+                    <span className="tabular">${Number(item.unitPrice).toFixed(2)}</span>
                   </td>
-                  <td style={{ textAlign: 'center', fontWeight: 700, color: '#fff' }}>
-                    {item.quantity}
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="tabular" style={{ fontWeight: 600 }}>{item.quantity}</span>
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#fff' }}>
-                    ${(item.quantity * Number(item.unitPrice)).toFixed(2)}
+                  <td style={{ textAlign: 'right' }}>
+                    <span className="tabular" style={{ fontWeight: 600 }}>
+                      ${(item.quantity * Number(item.unitPrice)).toFixed(2)}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4} style={{ textAlign: 'right', fontWeight: 700, padding: '1rem' }}>
-                  Total Dispatch Quantity:
+                <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600, padding: '12px 16px' }}>
+                  Total:
                 </td>
-                <td style={{ textAlign: 'center', fontWeight: 800, fontSize: '1.05rem', color: '#fff' }}>
-                  {challan.totalQuantity} units
+                <td style={{ textAlign: 'center', fontWeight: 700 }}>
+                  <span className="tabular">{challan.totalQuantity}</span>
                 </td>
-                <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '1.25rem', color: 'var(--accent-primary)' }}>
-                  ${grandTotal.toFixed(2)}
+                <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '15px' }}>
+                  <span className="tabular" style={{ color: 'var(--accent)' }}>
+                    ${grandTotal.toFixed(2)}
+                  </span>
                 </td>
               </tr>
             </tfoot>
           </table>
         </div>
 
-        {/* Signatures & Footer Notice */}
+        {/* Signatures */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '3rem',
-            paddingTop: '2rem',
-            borderTop: '1px solid var(--border-subtle)',
-            marginTop: '2rem',
+            gap: '40px',
+            paddingTop: '24px',
+            borderTop: '1px solid var(--border)',
+            marginTop: '24px',
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <div style={{ height: '50px', borderBottom: '1px dashed var(--border-subtle)', marginBottom: '0.5rem' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Received By (Customer Signature & Seal)</span>
+            <div style={{ height: '48px', borderBottom: '1px dashed var(--border)', marginBottom: '8px' }} />
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Received by (customer signature)</span>
           </div>
 
           <div style={{ textAlign: 'center' }}>
-            <div style={{ height: '50px', borderBottom: '1px dashed var(--border-subtle)', marginBottom: '0.5rem' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Authorized Signatory (Warehouse Dispatch)</span>
+            <div style={{ height: '48px', borderBottom: '1px dashed var(--border)', marginBottom: '8px' }} />
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Authorized signatory (warehouse)</span>
           </div>
         </div>
       </div>

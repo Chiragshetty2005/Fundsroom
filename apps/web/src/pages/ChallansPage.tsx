@@ -18,7 +18,6 @@ export const ChallansPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
@@ -52,85 +51,64 @@ export const ChallansPage: React.FC = () => {
 
   return (
     <div>
-      {/* Action Header */}
       <div className="action-bar">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            Sales Challans
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Order delivery challans, automatic inventory deductions, and line-item snapshots
-          </p>
+          <h1 className="page-title">Sales Challans</h1>
+          <p className="page-subtitle">Delivery challans with inventory deductions</p>
         </div>
 
         {hasRole('ADMIN', 'SALES') && (
           <Link to="/challans/new" className="btn btn-primary">
-            <PlusIcon size={18} />
-            <span>Create Sales Challan</span>
+            <PlusIcon size={16} />
+            <span>Create challan</span>
           </Link>
         )}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="search-input-wrapper" style={{ minWidth: '280px' }}>
-            <SearchIcon className="search-icon" size={16} />
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Search by Challan # or Customer name..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button
-              type="button"
-              className={`btn btn-sm ${!statusFilter ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => {
-                setStatusFilter('');
-                setPage(1);
-              }}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${statusFilter === 'CONFIRMED' ? 'btn-success' : 'btn-secondary'}`}
-              onClick={() => {
-                setStatusFilter('CONFIRMED');
-                setPage(1);
-              }}
-            >
-              Confirmed
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${statusFilter === 'DRAFT' ? 'btn-warning' : 'btn-secondary'}`}
-              onClick={() => {
-                setStatusFilter('DRAFT');
-                setPage(1);
-              }}
-            >
-              Drafts
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${statusFilter === 'CANCELLED' ? 'btn-danger' : 'btn-secondary'}`}
-              onClick={() => {
-                setStatusFilter('CANCELLED');
-                setPage(1);
-              }}
-            >
-              Cancelled
-            </button>
-          </div>
+      {/* Filter and search */}
+      <div className="filter-bar">
+        <div className="search-input-wrapper">
+          <SearchIcon className="search-icon" size={15} />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search by challan number or customer"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
+
+        <button
+          type="button"
+          className={`filter-toggle ${!statusFilter ? 'active' : ''}`}
+          onClick={() => { setStatusFilter(''); setPage(1); }}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`filter-toggle ${statusFilter === 'CONFIRMED' ? 'active' : ''}`}
+          onClick={() => { setStatusFilter('CONFIRMED'); setPage(1); }}
+        >
+          Confirmed
+        </button>
+        <button
+          type="button"
+          className={`filter-toggle ${statusFilter === 'DRAFT' ? 'active' : ''}`}
+          onClick={() => { setStatusFilter('DRAFT'); setPage(1); }}
+        >
+          Drafts
+        </button>
+        <button
+          type="button"
+          className={`filter-toggle ${statusFilter === 'CANCELLED' ? 'active' : ''}`}
+          onClick={() => { setStatusFilter('CANCELLED'); setPage(1); }}
+        >
+          Cancelled
+        </button>
       </div>
 
       {/* Challan Table */}
@@ -138,26 +116,28 @@ export const ChallansPage: React.FC = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Challan Number</th>
-              <th>Customer & Business</th>
-              <th>Total Units</th>
+              <th>Challan</th>
+              <th>Customer</th>
+              <th>Qty</th>
               <th>Status</th>
-              <th>Created By</th>
+              <th>Created by</th>
               <th>Date</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  Loading sales challans...
+                <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  Loading...
                 </td>
               </tr>
             ) : challans.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  No sales challans found.
+                <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  {search || statusFilter
+                    ? 'No challans match the current filters.'
+                    : 'No challans created yet. Create your first challan to start tracking deliveries.'}
                 </td>
               </tr>
             ) : (
@@ -166,47 +146,43 @@ export const ChallansPage: React.FC = () => {
                   <td>
                     <Link
                       to={`/challans/${ch.id}`}
-                      style={{
-                        color: 'var(--text-accent)',
-                        fontWeight: 700,
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.95rem',
-                      }}
+                      className="mono"
+                      style={{ color: 'var(--accent)', fontWeight: 600 }}
                     >
                       {ch.challanNumber}
                     </Link>
                   </td>
                   <td>
-                    <strong style={{ color: '#fff', fontSize: '0.925rem', display: 'block' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '13px' }}>
                       {ch.customer?.name}
-                    </strong>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      {ch.customer?.businessName} &bull; {ch.customer?.mobile}
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {ch.customer?.businessName} · {ch.customer?.mobile}
                     </span>
                   </td>
                   <td>
-                    <span style={{ fontWeight: 700, color: '#fff' }}>{ch.totalQuantity} units</span>
-                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      ({ch._count?.items || ch.items?.length || 0} line items)
+                    <span className="tabular" style={{ fontWeight: 600 }}>{ch.totalQuantity}</span>
+                    <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {ch._count?.items || ch.items?.length || 0} lines
                     </span>
                   </td>
                   <td>
                     <Badge type="challan-status" value={ch.status} />
                   </td>
                   <td>
-                    <div>{ch.createdBy?.name}</div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '13px' }}>{ch.createdBy?.name}</div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       {ch.createdBy?.role}
                     </span>
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <span className="tabular" style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                       {new Date(ch.createdAt).toLocaleDateString()}
                     </span>
                   </td>
                   <td>
-                    <Link to={`/challans/${ch.id}`} className="btn btn-secondary btn-sm">
-                      View Official Slip
+                    <Link to={`/challans/${ch.id}`} className="btn btn-secondary btn-sm row-actions">
+                      View
                     </Link>
                   </td>
                 </tr>

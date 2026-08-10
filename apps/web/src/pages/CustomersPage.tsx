@@ -19,16 +19,13 @@ export const CustomersPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
 
-  // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
@@ -108,11 +105,11 @@ export const CustomersPage: React.FC = () => {
     try {
       if (editingCustomer) {
         await api.put(`/customers/${editingCustomer.id}`, formData);
-        showToast('Customer profile updated successfully!', 'success');
+        showToast('Customer updated.', 'success');
         setEditingCustomer(null);
       } else {
         await api.post('/customers', formData);
-        showToast('New customer added to CRM!', 'success');
+        showToast('Customer added.', 'success');
         setIsCreateOpen(false);
       }
       loadCustomers();
@@ -121,102 +118,97 @@ export const CustomersPage: React.FC = () => {
     }
   };
 
+  const isOverdue = (dateStr: string) => new Date(dateStr) < new Date();
+
   return (
     <div>
-      {/* Action Header */}
       <div className="action-bar">
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            Customer CRM
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Manage client profiles, lead stages, and sales follow-up notes
-          </p>
+          <h1 className="page-title">CRM</h1>
+          <p className="page-subtitle">Customer profiles, lead stages, and follow-up notes</p>
         </div>
 
         {hasRole('ADMIN', 'SALES') && (
           <button className="btn btn-primary" onClick={handleOpenCreate}>
-            <PlusIcon size={18} />
-            <span>Add Customer</span>
+            <PlusIcon size={16} />
+            <span>Add customer</span>
           </button>
         )}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="glass-card" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="search-input-wrapper" style={{ minWidth: '260px' }}>
-            <SearchIcon className="search-icon" size={16} />
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Search by customer, business, mobile, or email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <select
-              className="form-select"
-              style={{ width: '150px' }}
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">All Statuses</option>
-              <option value="LEAD">Lead</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
-
-            <select
-              className="form-select"
-              style={{ width: '160px' }}
-              value={typeFilter}
-              onChange={(e) => {
-                setTypeFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">All Types</option>
-              <option value="RETAIL">Retail</option>
-              <option value="WHOLESALE">Wholesale</option>
-              <option value="DISTRIBUTOR">Distributor</option>
-            </select>
-          </div>
+      {/* Filters */}
+      <div className="filter-bar">
+        <div className="search-input-wrapper">
+          <SearchIcon className="search-icon" size={15} />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search by name, business, or mobile"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
+
+        <select
+          className="form-select"
+          style={{ width: '140px' }}
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All statuses</option>
+          <option value="LEAD">Lead</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+
+        <select
+          className="form-select"
+          style={{ width: '150px' }}
+          value={typeFilter}
+          onChange={(e) => {
+            setTypeFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All types</option>
+          <option value="RETAIL">Retail</option>
+          <option value="WHOLESALE">Wholesale</option>
+          <option value="DISTRIBUTOR">Distributor</option>
+        </select>
       </div>
 
-      {/* Customers Table */}
+      {/* Table */}
       <div className="table-container">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Customer & Company</th>
-              <th>Contact Info</th>
+              <th>Customer</th>
+              <th>Contact</th>
               <th>Type</th>
               <th>Status</th>
-              <th>Follow-up Due</th>
-              <th>Actions</th>
+              <th>Follow-up</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  Loading customer database...
+                <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  Loading...
                 </td>
               </tr>
             ) : customers.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                  No customers found matching your criteria.
+                <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  {search || statusFilter || typeFilter
+                    ? 'No customers match the current filters.'
+                    : 'No customers yet. Add your first lead to start tracking follow-ups.'}
                 </td>
               </tr>
             ) : (
@@ -225,17 +217,17 @@ export const CustomersPage: React.FC = () => {
                   <td>
                     <Link
                       to={`/customers/${c.id}`}
-                      style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem', display: 'block' }}
+                      style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '13px', display: 'block' }}
                     >
                       {c.name}
                     </Link>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      {c.businessName} {c.gstNumber ? `• GST: ${c.gstNumber}` : ''}
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {c.businessName} {c.gstNumber ? `· GST: ${c.gstNumber}` : ''}
                     </span>
                   </td>
                   <td>
-                    <div>{c.mobile}</div>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{c.email}</span>
+                    <div style={{ fontSize: '13px' }}>{c.mobile}</div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.email}</span>
                   </td>
                   <td>
                     <Badge type="customer-type" value={c.type} />
@@ -245,17 +237,24 @@ export const CustomersPage: React.FC = () => {
                   </td>
                   <td>
                     {c.followUpDate ? (
-                      <span style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
-                        📅 {new Date(c.followUpDate).toLocaleDateString()}
+                      <span
+                        className={`tabular ${isOverdue(c.followUpDate) ? 'overdue' : ''}`}
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          color: isOverdue(c.followUpDate) ? 'var(--danger-text)' : 'var(--text-secondary)',
+                        }}
+                      >
+                        {new Date(c.followUpDate).toLocaleDateString()}
                       </span>
                     ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None scheduled</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>—</span>
                     )}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="row-actions" style={{ display: 'flex', gap: '6px' }}>
                       <Link to={`/customers/${c.id}`} className="btn btn-secondary btn-sm">
-                        View CRM
+                        View
                       </Link>
                       {hasRole('ADMIN', 'SALES') && (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(c)}>
@@ -285,49 +284,49 @@ export const CustomersPage: React.FC = () => {
           setIsCreateOpen(false);
           setEditingCustomer(null);
         }}
-        title={editingCustomer ? 'Edit Customer Details' : 'Add New Customer'}
+        title={editingCustomer ? 'Edit customer' : 'Add customer'}
         size="lg"
       >
         <form onSubmit={handleSaveCustomer}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <div className="form-group">
-              <label className="form-label">Full Name *</label>
+              <label className="form-label">Full name</label>
               <input
                 type="text"
                 className="form-input"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. John Doe"
+                placeholder="John Doe"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Business / Firm Name *</label>
+              <label className="form-label">Business name</label>
               <input
                 type="text"
                 className="form-input"
                 required
                 value={formData.businessName}
                 onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                placeholder="e.g. Apex Electronics Ltd"
+                placeholder="Apex Electronics Ltd"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Mobile Number *</label>
+              <label className="form-label">Mobile number</label>
               <input
                 type="text"
                 className="form-input"
                 required
                 value={formData.mobile}
                 onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                placeholder="e.g. +91 98765 43210"
+                placeholder="+91 98765 43210"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email Address *</label>
+              <label className="form-label">Email address</label>
               <input
                 type="email"
                 className="form-input"
@@ -339,7 +338,7 @@ export const CustomersPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Customer Type</label>
+              <label className="form-label">Customer type</label>
               <select
                 className="form-select"
                 value={formData.type}
@@ -352,7 +351,7 @@ export const CustomersPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Customer Status</label>
+              <label className="form-label">Status</label>
               <select
                 className="form-select"
                 value={formData.status}
@@ -365,18 +364,18 @@ export const CustomersPage: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">GST Number (Optional)</label>
+              <label className="form-label">GST number (optional)</label>
               <input
                 type="text"
                 className="form-input"
                 value={formData.gstNumber}
                 onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
-                placeholder="e.g. 29ABCDE1234F1Z5"
+                placeholder="29ABCDE1234F1Z5"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Next Follow-up Date (Optional)</label>
+              <label className="form-label">Next follow-up date</label>
               <input
                 type="date"
                 className="form-input"
@@ -387,24 +386,24 @@ export const CustomersPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Physical Address *</label>
+            <label className="form-label">Address</label>
             <input
               type="text"
               className="form-input"
               required
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="e.g. #14 Commercial Street, Bangalore"
+              placeholder="#14 Commercial Street, Bangalore"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Internal Notes / Requirements</label>
+            <label className="form-label">Notes</label>
             <textarea
               className="form-textarea"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Add key background, product interests, payment terms..."
+              placeholder="Key background, product interests, payment terms"
             />
           </div>
 
@@ -420,7 +419,7 @@ export const CustomersPage: React.FC = () => {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary">
-              {editingCustomer ? 'Update Customer' : 'Create Customer'}
+              {editingCustomer ? 'Update customer' : 'Add customer'}
             </button>
           </div>
         </form>

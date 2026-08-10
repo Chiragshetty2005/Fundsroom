@@ -21,17 +21,19 @@ export const Pagination: React.FC<PaginationProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '1.25rem',
-        paddingTop: '1rem',
-        borderTop: '1px solid var(--border-subtle)',
-        fontSize: '0.85rem',
+        marginTop: '12px',
+        paddingTop: '12px',
+        borderTop: '1px solid var(--border)',
+        fontSize: '13px',
         color: 'var(--text-secondary)',
       }}
     >
       <div>
-        Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> ({totalItems} total records)
+        Page <span className="tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{currentPage}</span> of{' '}
+        <span className="tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{totalPages}</span>
+        <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>({totalItems} records)</span>
       </div>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '6px' }}>
         <button
           className="btn btn-secondary btn-sm"
           disabled={currentPage <= 1}

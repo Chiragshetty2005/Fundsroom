@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { CommandPalette } from './components/common/CommandPalette';
 import { DashboardPage } from './pages/DashboardPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
@@ -24,12 +25,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
           display: 'grid',
           placeItems: 'center',
           background: 'var(--bg-primary)',
-          color: 'var(--text-muted)',
+          color: 'var(--text-secondary)',
         }}
       >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⚡</div>
-          <div>Loading Mini ERP Portal...</div>
+        <div style={{ textAlign: 'center', fontSize: '14px' }}>
+          Loading...
         </div>
       </div>
     );
@@ -59,6 +59,7 @@ export function App() {
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
+          <CommandPalette />
           <Routes>
             <Route
               path="/login"

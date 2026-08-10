@@ -17,10 +17,6 @@ export const Topbar: React.FC = () => {
 
   return (
     <header className="topbar">
-      <div className="topbar-title-section">
-        {/* Dynamic breadcrumb or page title */}
-      </div>
-
       <div className="topbar-actions">
         <div className="user-badge-pill">
           <div className="user-avatar">{initials}</div>
@@ -35,10 +31,9 @@ export const Topbar: React.FC = () => {
           className="btn btn-secondary btn-sm"
           onClick={logout}
           title="Sign out"
-          style={{ padding: '0.45rem 0.75rem' }}
         >
-          <LogoutIcon size={16} />
-          <span>Sign Out</span>
+          <LogoutIcon size={14} />
+          <span>Sign out</span>
         </button>
       </div>
     </header>
