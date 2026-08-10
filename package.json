@@ -1,0 +1,19 @@
+{
+  "name": "mini-erp-crm-portal",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev --workspace @mini-erp/api\" \"npm run dev --workspace @mini-erp/web\"",
+    "build": "npm run build --workspaces",
+    "check": "npm run check --workspaces",
+    "format": "node ./node_modules/prettier/bin/prettier.cjs --write .",
+    "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.5.3"
+  }
+}
