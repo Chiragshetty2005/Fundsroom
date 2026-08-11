@@ -8,7 +8,7 @@ const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
-  JWT_SECRET: z.string().min(24),
+  JWT_SECRET: z.string().min(24).default('my-super-secret-jwt-key-for-dev-1234'),
   AWS_REGION: z.string().default('us-east-1'),
   AWS_S3_BUCKET: z.string().optional().default(''),
   AWS_ACCESS_KEY_ID: z.string().optional().default(''),
