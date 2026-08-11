@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { compare } from 'bcryptjs';
+import { Role } from '@prisma/client';
+import { compare, hash } from 'bcryptjs';
 import { z } from 'zod';
 
 import { prisma } from '../lib/prisma.js';
@@ -32,7 +33,6 @@ authRouter.post('/signup', async (req, res, next) => {
       return;
     }
 
-    const { hash } = await import('bcryptjs');
     const passwordHash = await hash(password, 10);
 
     const user = await prisma.user.create({
@@ -40,7 +40,7 @@ authRouter.post('/signup', async (req, res, next) => {
         name,
         email,
         passwordHash,
-        role: 'USER',
+        role: Role.USER,
       },
     });
 
