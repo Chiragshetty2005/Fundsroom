@@ -19,8 +19,8 @@ services:
 
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: mini_erp_api
     restart: unless-stopped
     environment:
@@ -35,6 +35,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres123}
       DB_SCHEMA: ${DB_SCHEMA:-public}
       SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-localTestPass123}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     ports:
       - "3000:3000"
     depends_on:
@@ -43,8 +47,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: mini_erp_web
     restart: unless-stopped
     ports:

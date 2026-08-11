@@ -1,0 +1,12 @@
+.git
+.gitignore
+.editorconfig
+.prettierrc.json
+**/node_modules
+**/dist
+**/.env
+**/.env.local
+**/.agent
+artifacts
+assessment
+*.log

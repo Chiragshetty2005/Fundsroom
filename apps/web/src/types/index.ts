@@ -80,6 +80,7 @@ export interface Product {
   currentStock: number;
   minimumStockAlertQuantity: number;
   warehouseLocation: string;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   isLowStock?: boolean;

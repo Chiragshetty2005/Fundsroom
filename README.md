@@ -184,9 +184,13 @@ All accounts are seeded with the password specified in `SEED_USER_PASSWORD` (def
 - `POST /api/customers/:id/follow-ups` - Add follow-up note (`ADMIN`, `SALES`).
 
 ### Products (`/api/products`)
-- `GET /api/products` - List products with low stock filter (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
+- `GET /api/products` - List products with low stock filter and signed S3 image URLs (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
 - `POST /api/products` - Create product (`ADMIN`, `WAREHOUSE`).
-- `PUT /api/products/:id` - Update product (`ADMIN`, `WAREHOUSE`).
+- `GET /api/products/:id` - Product details with signed S3 image URL (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
+- `PUT /api/products/:id` - Update product attributes (`ADMIN`, `WAREHOUSE`).
+- `POST /api/products/:id/image` - Upload product image to S3 (`ADMIN`, `WAREHOUSE`, max 5MB, JPG/PNG/WebP).
+- `DELETE /api/products/:id/image` - Remove image from S3 (`ADMIN`, `WAREHOUSE`).
+- `DELETE /api/products/:id` - Delete product and clean up S3 object (`ADMIN`).
 
 ### Inventory (`/api/inventory`)
 - `GET /api/inventory/movements` - View audit log (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
@@ -198,3 +202,20 @@ All accounts are seeded with the password specified in `SEED_USER_PASSWORD` (def
 - `GET /api/challans/:id` - View printable delivery challan (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
 - `POST /api/challans/:id/confirm` - Confirm draft & deduct inventory atomically (`ADMIN`, `SALES`).
 - `POST /api/challans/:id/cancel` - Cancel draft challan (`ADMIN`, `SALES`).
+
+---
+
+## AWS S3 Configuration
+
+To enable cloud image storage in AWS S3, add the following variables to `.env`:
+
+```env
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your-private-s3-bucket-name
+AWS_ACCESS_KEY_ID=your-aws-iam-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-iam-secret-access-key
+```
+
+- **Bucket Access**: Recommended to keep the bucket private. The backend automatically generates secure short-lived (1-hour) signed URLs for image rendering.
+- **Local Fallback**: If AWS variables are left blank, images fallback gracefully to data URIs for immediate local development without AWS credentials.
+

@@ -1,8 +1,15 @@
 import { Router } from 'express';
 import { Prisma, Role } from '@prisma/client';
+import multer from 'multer';
 import { z } from 'zod';
 
 import { prisma } from '../lib/prisma.js';
+import {
+  attachSignedProductImages,
+  attachSignedProductImageUrl,
+  deleteProductImage,
+  uploadProductImage,
+} from '../lib/s3.js';
 import { AppError } from '../middleware/error-handler.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
@@ -11,6 +18,27 @@ export const productRouter = Router();
 
 // Protect all product routes with authentication
 productRouter.use(authenticate);
+
+// Configure Multer with in-memory storage, 5MB limit, and JPG/PNG/WebP validation
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB max
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new AppError(
+          400,
+          `Invalid file format (${file.mimetype}). Only JPG, PNG, and WebP images are permitted.`,
+        ),
+      );
+    }
+  },
+});
 
 const productQuerySchema = z.object({
   search: z.string().optional(),
@@ -35,6 +63,7 @@ const createProductSchema = z.object({
     .min(0, 'Minimum stock alert quantity cannot be negative.')
     .default(5),
   warehouseLocation: z.string().trim().min(1, 'Warehouse location is required.'),
+  imageUrl: z.string().optional().nullable(),
 });
 
 const updateProductSchema = z.object({
@@ -43,6 +72,7 @@ const updateProductSchema = z.object({
   unitPrice: z.coerce.number().positive().optional(),
   minimumStockAlertQuantity: z.coerce.number().int().min(0).optional(),
   warehouseLocation: z.string().trim().min(1).optional(),
+  imageUrl: z.string().optional().nullable(),
 });
 
 // GET /api/products - List products with search, category filtering, low stock alerts, and pagination
@@ -64,79 +94,37 @@ productRouter.get(
         where.OR = [
           { name: { contains: search, mode: 'insensitive' } },
           { sku: { contains: search, mode: 'insensitive' } },
-          { category: { contains: search, mode: 'insensitive' } },
           { warehouseLocation: { contains: search, mode: 'insensitive' } },
         ];
       }
 
-      if (lowStock) {
-        // If low stock filter is active, fetch products where currentStock <= minimumStockAlertQuantity
-        const rawProducts = await prisma.$queryRaw<
-          Array<{
-            id: string;
-            name: string;
-            sku: string;
-            category: string;
-            unitPrice: Prisma.Decimal;
-            currentStock: number;
-            minimumStockAlertQuantity: number;
-            warehouseLocation: string;
-            createdAt: Date;
-            updatedAt: Date;
-          }>
-        >`
-          SELECT * FROM "Product"
-          WHERE "currentStock" <= "minimumStockAlertQuantity"
-          ${search ? Prisma.sql`AND ("name" ILIKE ${`%${search}%`} OR "sku" ILIKE ${`%${search}%`} OR "category" ILIKE ${`%${search}%`})` : Prisma.empty}
-          ${category ? Prisma.sql`AND "category" ILIKE ${category}` : Prisma.empty}
-          ORDER BY "currentStock" ASC, "name" ASC
-          LIMIT ${limit} OFFSET ${skip}
-        `;
-
-        const countResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
-          SELECT COUNT(*) as count FROM "Product"
-          WHERE "currentStock" <= "minimumStockAlertQuantity"
-          ${search ? Prisma.sql`AND ("name" ILIKE ${`%${search}%`} OR "sku" ILIKE ${`%${search}%`} OR "category" ILIKE ${`%${search}%`})` : Prisma.empty}
-          ${category ? Prisma.sql`AND "category" ILIKE ${category}` : Prisma.empty}
-        `;
-
-        const total = Number(countResult[0]?.count ?? 0);
-
-        res.status(200).json({
-          data: rawProducts.map((p) => ({
-            ...p,
-            isLowStock: p.currentStock <= p.minimumStockAlertQuantity,
-          })),
-          pagination: {
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit) || 1,
-          },
-        });
-        return;
-      }
-
-      const [total, products] = await Promise.all([
+      let [total, products] = await Promise.all([
         prisma.product.count({ where }),
         prisma.product.findMany({
           where,
           skip,
           take: limit,
-          orderBy: { name: 'asc' },
+          orderBy: { createdAt: 'desc' },
         }),
       ]);
 
+      if (lowStock) {
+        products = products.filter((p) => p.currentStock <= p.minimumStockAlertQuantity);
+      }
+
+      // Attach signed image URLs for private S3 buckets
+      const productsWithUrls = await attachSignedProductImages(products);
+
       res.status(200).json({
-        data: products.map((p) => ({
+        data: productsWithUrls.map((p) => ({
           ...p,
           isLowStock: p.currentStock <= p.minimumStockAlertQuantity,
         })),
         pagination: {
-          total,
+          total: lowStock ? products.length : total,
           page,
           limit,
-          totalPages: Math.ceil(total / limit) || 1,
+          totalPages: Math.ceil((lowStock ? products.length : total) / limit) || 1,
         },
       });
     } catch (error) {
@@ -145,7 +133,7 @@ productRouter.get(
   },
 );
 
-// POST /api/products - Create a new product (Admin and Warehouse only)
+// POST /api/products - Create a new product master record
 productRouter.post(
   '/',
   authorize(Role.ADMIN, Role.WAREHOUSE),
@@ -168,6 +156,7 @@ productRouter.post(
             currentStock: data.initialStock,
             minimumStockAlertQuantity: data.minimumStockAlertQuantity,
             warehouseLocation: data.warehouseLocation,
+            imageUrl: data.imageUrl || null,
           },
         });
 
@@ -186,9 +175,11 @@ productRouter.post(
         return created;
       });
 
+      const productWithUrl = await attachSignedProductImageUrl(product);
+
       res.status(201).json({
         product: {
-          ...product,
+          ...productWithUrl,
           isLowStock: product.currentStock <= product.minimumStockAlertQuantity,
         },
       });
@@ -225,9 +216,11 @@ productRouter.get(
         throw new AppError(404, 'Product not found.');
       }
 
+      const productWithUrl = await attachSignedProductImageUrl(product);
+
       res.status(200).json({
         product: {
-          ...product,
+          ...productWithUrl,
           isLowStock: product.currentStock <= product.minimumStockAlertQuantity,
         },
       });
@@ -259,14 +252,156 @@ productRouter.put(
           unitPrice: data.unitPrice !== undefined ? new Prisma.Decimal(data.unitPrice) : undefined,
           minimumStockAlertQuantity: data.minimumStockAlertQuantity,
           warehouseLocation: data.warehouseLocation,
+          imageUrl: data.imageUrl !== undefined ? data.imageUrl : undefined,
         },
       });
 
+      const productWithUrl = await attachSignedProductImageUrl(updated);
+
       res.status(200).json({
         product: {
-          ...updated,
+          ...productWithUrl,
           isLowStock: updated.currentStock <= updated.minimumStockAlertQuantity,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// POST /api/products/:id/image - Upload product image to S3 (Admin & Warehouse only)
+productRouter.post(
+  '/:id/image',
+  authorize(Role.ADMIN, Role.WAREHOUSE),
+  (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+      if (err) {
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+          return next(new AppError(400, 'File too large. Maximum allowed size is 5MB.'));
+        }
+        return next(err);
+      }
+      next();
+    });
+  },
+  async (req, res, next) => {
+    try {
+      const id = req.params.id as string;
+
+      if (!req.file) {
+        throw new AppError(400, 'No image file provided. Please attach a file in the "image" field.');
+      }
+
+      const product = await prisma.product.findUnique({ where: { id } });
+      if (!product) {
+        throw new AppError(404, 'Product not found.');
+      }
+
+      // If replacing an existing S3 image, delete old file to prevent orphaned S3 objects
+      if (product.imageUrl) {
+        await deleteProductImage(product.imageUrl);
+      }
+
+      // Upload new image to AWS S3 (or fallback data URI)
+      const objectKey = await uploadProductImage(product.id, req.file);
+
+      // Save key in database
+      const updated = await prisma.product.update({
+        where: { id },
+        data: { imageUrl: objectKey },
+      });
+
+      const productWithUrl = await attachSignedProductImageUrl(updated);
+
+      res.status(200).json({
+        message: 'Product image uploaded successfully.',
+        product: {
+          ...productWithUrl,
+          isLowStock: productWithUrl.currentStock <= productWithUrl.minimumStockAlertQuantity,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// DELETE /api/products/:id/image - Delete product image from S3 (Admin & Warehouse only)
+productRouter.delete(
+  '/:id/image',
+  authorize(Role.ADMIN, Role.WAREHOUSE),
+  async (req, res, next) => {
+    try {
+      const id = req.params.id as string;
+
+      const product = await prisma.product.findUnique({ where: { id } });
+      if (!product) {
+        throw new AppError(404, 'Product not found.');
+      }
+
+      if (product.imageUrl) {
+        await deleteProductImage(product.imageUrl);
+        await prisma.product.update({
+          where: { id },
+          data: { imageUrl: null },
+        });
+      }
+
+      res.status(200).json({
+        message: 'Product image removed successfully.',
+        product: {
+          ...product,
+          imageUrl: null,
+          isLowStock: product.currentStock <= product.minimumStockAlertQuantity,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// DELETE /api/products/:id - Delete product master record (Admin only)
+productRouter.delete(
+  '/:id',
+  authorize(Role.ADMIN),
+  async (req, res, next) => {
+    try {
+      const id = req.params.id as string;
+
+      const product = await prisma.product.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              challanItems: true,
+              stockMovements: true,
+            },
+          },
+        },
+      });
+
+      if (!product) {
+        throw new AppError(404, 'Product not found.');
+      }
+
+      if (product._count.challanItems > 0 || product._count.stockMovements > 0) {
+        throw new AppError(
+          400,
+          `Cannot delete product "${product.name}" (${product.sku}) because it has associated transaction history (${product._count.challanItems} challans, ${product._count.stockMovements} inventory movements).`,
+        );
+      }
+
+      // Clean up orphaned image in S3
+      if (product.imageUrl) {
+        await deleteProductImage(product.imageUrl);
+      }
+
+      await prisma.product.delete({ where: { id } });
+
+      res.status(200).json({
+        message: `Product "${product.name}" (${product.sku}) has been deleted.`,
       });
     } catch (error) {
       next(error);
