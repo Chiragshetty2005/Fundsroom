@@ -17,6 +17,7 @@ const users = [
   { name: 'Sales User', email: 'sales@minierp.local', role: Role.SALES },
   { name: 'Warehouse User', email: 'warehouse@minierp.local', role: Role.WAREHOUSE },
   { name: 'Accounts User', email: 'accounts@minierp.local', role: Role.ACCOUNTS },
+  { name: 'Standard User', email: 'user@minierp.local', role: Role.USER },
 ] as const;
 
 async function main() {

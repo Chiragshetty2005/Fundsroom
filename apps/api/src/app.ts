@@ -9,12 +9,14 @@ import { customerRouter } from './routes/customers.js';
 import { healthRouter } from './routes/health.js';
 import { inventoryRouter } from './routes/inventory.js';
 import { productRouter } from './routes/products.js';
+import { usersRouter } from './routes/users.js';
 
 export const app = express();
 
 app.use(cors({ origin: env.CLIENT_ORIGIN }));
 app.use(express.json());
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
 app.use('/api/customers', customerRouter);
 app.use('/api/products', productRouter);
 app.use('/api/inventory', inventoryRouter);

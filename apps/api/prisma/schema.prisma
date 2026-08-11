@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  USER
   SALES
   WAREHOUSE
   ACCOUNTS
@@ -42,7 +43,7 @@ model User {
   name             String
   email            String             @unique
   passwordHash     String
-  role             Role               @default(SALES)
+  role             Role               @default(USER)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   createdFollowUps CustomerFollowUp[]

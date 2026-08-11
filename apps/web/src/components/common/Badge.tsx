@@ -16,6 +16,7 @@ export const Badge: React.FC<BadgeProps> = ({ type, value }) => {
       else if (value === 'SALES') badgeClass = 'info';
       else if (value === 'WAREHOUSE') badgeClass = 'warning';
       else if (value === 'ACCOUNTS') badgeClass = 'success';
+      else if (value === 'USER') badgeClass = 'neutral';
       break;
 
     case 'customer-status':

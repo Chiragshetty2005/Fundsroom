@@ -56,7 +56,7 @@ const followUpSchema = z.object({
 // GET /api/customers - List customers with search, filtering, and pagination
 customerRouter.get(
   '/',
-  authorize(Role.ADMIN, Role.SALES, Role.ACCOUNTS),
+  authorize(Role.ADMIN, Role.SALES, Role.WAREHOUSE, Role.ACCOUNTS),
   async (req, res, next) => {
     try {
       const { search, status, type, page, limit } = querySchema.parse(req.query);
@@ -133,7 +133,7 @@ customerRouter.post(
 // GET /api/customers/:id - View customer details with follow-up timeline
 customerRouter.get(
   '/:id',
-  authorize(Role.ADMIN, Role.SALES, Role.ACCOUNTS),
+  authorize(Role.ADMIN, Role.SALES, Role.WAREHOUSE, Role.ACCOUNTS),
   async (req, res, next) => {
     try {
       const id = req.params.id as string;

@@ -8,7 +8,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   hasRole: (...roles: Role[]) => boolean;
 }
 
@@ -21,32 +23,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const fetchCurrentUser = async () => {
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    if (!storedToken) {
+      setUser(null);
+      setToken(null);
+      return;
+    }
+
+    try {
+      const data = await api.get<{ user: User }>('/auth/me');
+      setUser(data.user);
+      setToken(storedToken);
+    } catch (error) {
+      console.error('Session expired or invalid:', error);
+      localStorage.removeItem(TOKEN_KEY);
+      setToken(null);
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    async function loadUser() {
+    async function loadInitialUser() {
       const storedToken = localStorage.getItem(TOKEN_KEY);
       if (!storedToken) {
         setIsLoading(false);
         return;
       }
 
-      try {
-        const data = await api.get<{ user: User }>('/auth/me');
-        setUser(data.user);
-      } catch (error) {
-        console.error('Session expired or invalid:', error);
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
+      await fetchCurrentUser();
+      setIsLoading(false);
     }
 
-    loadUser();
+    loadInitialUser();
+
+    // Listen for unauthorized 401 events dispatched from API client
+    const handleUnauthorized = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   const login = async (email: string, password: string) => {
     const data = await api.post<{ token: string; user: User }>('/auth/login', {
+      email,
+      password,
+    });
+
+    localStorage.setItem(TOKEN_KEY, data.token);
+    setToken(data.token);
+    setUser(data.user);
+  };
+
+  const signup = async (name: string, email: string, password: string) => {
+    const data = await api.post<{ token: string; user: User }>('/auth/signup', {
+      name,
       email,
       password,
     });
@@ -62,6 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    await fetchCurrentUser();
+  };
+
   const hasRole = (...roles: Role[]): boolean => {
     if (!user) return false;
     return roles.includes(user.role);
@@ -72,10 +111,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         token,
-        isAuthenticated: !!user,
+        isAuthenticated: !!token && !!user,
         isLoading,
         login,
+        signup,
         logout,
+        refreshUser,
         hasRole,
       }}
     >

@@ -10,7 +10,14 @@
     "build": "npm run build --workspaces",
     "check": "npm run check --workspaces",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write .",
-    "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check ."
+    "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check .",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:migrate": "docker compose exec api npm run prisma:deploy",
+    "docker:seed": "docker compose exec api npm run db:seed",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:api": "docker compose logs -f api",
+    "docker:logs:web": "docker compose logs -f web"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

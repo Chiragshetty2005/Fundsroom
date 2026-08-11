@@ -13,7 +13,7 @@ import { StatCard } from '../components/common/StatCard';
 import type { Customer, PaginatedResponse, Product, SalesChallan } from '../types';
 
 export const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [loading, setLoading] = useState(true);
 
   const [customerCount, setCustomerCount] = useState(0);
@@ -79,6 +79,33 @@ export const DashboardPage: React.FC = () => {
           <p className="page-subtitle">Overview for {user?.name}</p>
         </div>
       </div>
+
+      {/* Role Assignment Notice for default USER */}
+      {user?.role === 'USER' && (
+        <div
+          style={{
+            background: 'rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(99, 102, 241, 0.25)',
+            borderRadius: 'var(--radius-md)',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>
+              Account Pending Role Assignment
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+              Your account currently holds the standard <strong>USER</strong> role. An administrator can elevate your access to <strong>SALES</strong>, <strong>WAREHOUSE</strong>, <strong>ACCOUNTS</strong>, or <strong>ADMIN</strong> in the User Admin console.
+            </p>
+          </div>
+          <Badge type="role" value="USER" />
+        </div>
+      )}
 
       {/* KPI Stats */}
       <div className="stats-grid">
@@ -239,9 +266,11 @@ export const DashboardPage: React.FC = () => {
             <h2 className="card-title">Recent Challans</h2>
             <p className="card-subtitle">Latest fulfillment orders</p>
           </div>
-          <Link to="/challans/new" className="btn btn-primary btn-sm">
-            <span>New challan</span>
-          </Link>
+          {hasRole('ADMIN', 'SALES') && (
+            <Link to="/challans/new" className="btn btn-primary btn-sm">
+              <span>New challan</span>
+            </Link>
+          )}
         </div>
 
         {recentChallans.length === 0 ? (

@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           <span>Dashboard</span>
         </NavLink>
 
-        {hasRole('ADMIN', 'SALES', 'ACCOUNTS') && (
+        {hasRole('ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS') && (
           <NavLink
             to="/customers"
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
@@ -62,32 +62,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </NavLink>
         )}
 
-        <NavLink
-          to="/products"
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          title="Products"
-        >
-          <ProductsIcon size={18} />
-          <span>Products</span>
-        </NavLink>
+        {hasRole('ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS') && (
+          <NavLink
+            to="/products"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            title="Products"
+          >
+            <ProductsIcon size={18} />
+            <span>Products</span>
+          </NavLink>
+        )}
 
-        <NavLink
-          to="/inventory"
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          title="Inventory"
-        >
-          <InventoryIcon size={18} />
-          <span>Inventory</span>
-        </NavLink>
+        {hasRole('ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS') && (
+          <NavLink
+            to="/inventory"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            title="Inventory"
+          >
+            <InventoryIcon size={18} />
+            <span>Inventory</span>
+          </NavLink>
+        )}
 
-        <NavLink
-          to="/challans"
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          title="Sales Challans"
-        >
-          <ChallanIcon size={18} />
-          <span>Sales Challans</span>
-        </NavLink>
+        {hasRole('ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS') && (
+          <NavLink
+            to="/challans"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            title="Sales Challans"
+          >
+            <ChallanIcon size={18} />
+            <span>Sales Challans</span>
+          </NavLink>
+        )}
+
+        {hasRole('ADMIN') && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            title="User Management"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>User Admin</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="sidebar-footer">

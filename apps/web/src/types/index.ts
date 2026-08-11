@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'SALES' | 'WAREHOUSE' | 'ACCOUNTS';
+export type Role = 'ADMIN' | 'USER' | 'SALES' | 'WAREHOUSE' | 'ACCOUNTS';
 
 export type CustomerType = 'RETAIL' | 'WHOLESALE' | 'DISTRIBUTOR';
 export type CustomerStatus = 'LEAD' | 'ACTIVE' | 'INACTIVE';
@@ -11,6 +11,20 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+}
+
+export interface AdminUserItem {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+  updatedAt?: string;
+  _count?: {
+    createdFollowUps: number;
+    createdChallans: number;
+    stockMovements: number;
+  };
 }
 
 export interface Customer {

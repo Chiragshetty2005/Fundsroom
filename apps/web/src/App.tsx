@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { CommandPalette } from './components/common/CommandPalette';
+import { RoleProtectedRoute } from './components/common/RoleProtectedRoute';
 import { DashboardPage } from './pages/DashboardPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerDetailPage } from './pages/CustomerDetailPage';
@@ -12,6 +13,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { ChallansPage } from './pages/ChallansPage';
 import { CreateChallanPage } from './pages/CreateChallanPage';
 import { ChallanDetailPage } from './pages/ChallanDetailPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
 import { LoginPage } from './pages/LoginPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,6 +63,7 @@ export function App() {
         <AuthProvider>
           <CommandPalette />
           <Routes>
+            {/* Public Auth Route */}
             <Route
               path="/login"
               element={
@@ -70,6 +73,7 @@ export function App() {
               }
             />
 
+            {/* Protected Operations Portal Routes */}
             <Route
               path="/"
               element={
@@ -79,15 +83,91 @@ export function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="customers" element={<CustomersPage />} />
-              <Route path="customers/:id" element={<CustomerDetailPage />} />
-              <Route path="products" element={<ProductsPage />} />
-              <Route path="inventory" element={<InventoryPage />} />
-              <Route path="challans" element={<ChallansPage />} />
-              <Route path="challans/new" element={<CreateChallanPage />} />
-              <Route path="challans/:id" element={<ChallanDetailPage />} />
+
+              {/* CRM - Customers */}
+              <Route
+                path="customers"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <CustomersPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="customers/:id"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <CustomerDetailPage />
+                  </RoleProtectedRoute>
+                }
+              />
+
+              {/* Products Catalog */}
+              <Route
+                path="products"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <ProductsPage />
+                  </RoleProtectedRoute>
+                }
+              />
+
+              {/* Inventory Movements */}
+              <Route
+                path="inventory"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <InventoryPage />
+                  </RoleProtectedRoute>
+                }
+              />
+
+              {/* Sales Challans */}
+              <Route
+                path="challans"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <ChallansPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="challans/new"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES']}>
+                    <CreateChallanPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="challans/:id"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS']}>
+                    <ChallanDetailPage />
+                  </RoleProtectedRoute>
+                }
+              />
+
+              {/* Admin User Management */}
+              <Route
+                path="admin"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminUsersPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="users"
+                element={
+                  <RoleProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminUsersPage />
+                  </RoleProtectedRoute>
+                }
+              />
             </Route>
 
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
@@ -95,4 +175,5 @@ export function App() {
     </BrowserRouter>
   );
 }
+
 export default App;
