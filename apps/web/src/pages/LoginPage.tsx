@@ -23,7 +23,7 @@ export const LoginPage: React.FC = () => {
   
   // Login fields
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('localTestPass123');
+  const [password, setPassword] = useState('');
 
   // Sign up fields
   const [name, setName] = useState('');
