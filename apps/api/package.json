@@ -8,11 +8,11 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "check": "tsc --noEmit -p tsconfig.json",
-    "prisma:generate": "node ./node_modules/prisma/build/index.js generate",
-    "prisma:migrate": "node ./node_modules/prisma/build/index.js migrate dev",
-    "prisma:deploy": "node ./node_modules/prisma/build/index.js migrate deploy",
-    "prisma:studio": "node ./node_modules/prisma/build/index.js studio",
-    "db:seed": "node ./node_modules/prisma/build/index.js db seed"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1107.0",
