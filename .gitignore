@@ -9,3 +9,6 @@ coverage/
 .pem
 *.pem
 *.pem*
+
+assets
+urls.txt
