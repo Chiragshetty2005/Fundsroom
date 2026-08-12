@@ -1,0 +1,44 @@
+name: Mini ERP CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate --workspace=@mini-erp/api
+
+      - name: Check API
+        run: npm run check --workspace=@mini-erp/api
+
+      - name: Build API
+        run: npm run build --workspace=@mini-erp/api
+
+      - name: Build Web
+        run: npm run build --workspace=@mini-erp/web
+
+      - name: Build API Docker image
+        run: docker build -f apps/api/Dockerfile -t mini-erp-api .
+
+      - name: Build Web Docker image
+        run: docker build -f apps/web/Dockerfile -t mini-erp-web .
