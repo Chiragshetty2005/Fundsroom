@@ -12,7 +12,7 @@ export const authRouter = Router();
 
 const getAuthCookieOptions = (): CookieOptions => ({
   httpOnly: true,
-  secure: env.NODE_ENV === 'production',
+  secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true',
   sameSite: 'lax',
   path: '/',
   maxAge: 8 * 60 * 60 * 1000, // 8 hours in milliseconds
@@ -114,12 +114,7 @@ authRouter.post('/login', async (req, res, next) => {
 
 // POST /api/auth/logout
 authRouter.post('/logout', (req, res) => {
-  res.clearCookie(AUTH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  });
+  res.clearCookie(AUTH_COOKIE_NAME, getAuthCookieOptions());
 
   res.status(200).json({
     message: 'Logged out successfully.',
