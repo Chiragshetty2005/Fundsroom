@@ -2,17 +2,20 @@ import type { RequestHandler } from 'express';
 
 import { verifyToken } from '../lib/jwt.js';
 
-export const authenticate: RequestHandler = (req, res, next) => {
-  const header = req.headers.authorization;
+export const AUTH_COOKIE_NAME = 'auth_token';
 
-  if (!header || !header.startsWith('Bearer ')) {
+export const authenticate: RequestHandler = (req, res, next) => {
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME] || req.cookies?.token;
+  const authHeader = req.headers.authorization;
+  const headerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const token = cookieToken || headerToken;
+
+  if (!token) {
     res.status(401).json({
-      error: { message: 'Authentication required. Provide a Bearer token.' },
+      error: { message: 'Authentication required. Please sign in.' },
     });
     return;
   }
-
-  const token = header.slice(7);
 
   try {
     const payload = verifyToken(token);
@@ -20,7 +23,8 @@ export const authenticate: RequestHandler = (req, res, next) => {
     next();
   } catch {
     res.status(401).json({
-      error: { message: 'Invalid or expired token.' },
+      error: { message: 'Invalid or expired session. Please sign in again.' },
     });
   }
 };
+

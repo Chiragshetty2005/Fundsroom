@@ -1,4 +1,4 @@
-name: Mini ERP CI
+name: Mini ERP CI/CD
 
 on:
   push:
@@ -7,6 +7,16 @@ on:
   pull_request:
     branches:
       - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-north-1
+  AWS_ACCOUNT_ID: "174655393542"
+  ECR_API_REPOSITORY: mini-erp-api
+  ECR_WEB_REPOSITORY: mini-erp-web
 
 jobs:
   build:
@@ -37,8 +47,44 @@ jobs:
       - name: Build Web
         run: npm run build --workspace=@mini-erp/web
 
+      - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::174655393542:role/GithubActions-Fundsroom
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build API Docker image
-        run: docker build -f apps/api/Dockerfile -t mini-erp-api .
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker build \
+            -f apps/api/Dockerfile \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPOSITORY }}:${{ github.sha }} \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPOSITORY }}:latest \
+            .
 
       - name: Build Web Docker image
-        run: docker build -f apps/web/Dockerfile -t mini-erp-web .
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker build \
+            -f apps/web/Dockerfile \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_WEB_REPOSITORY }}:${{ github.sha }} \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_WEB_REPOSITORY }}:latest \
+            .
+
+      - name: Push API image to ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPOSITORY }}:latest
+
+      - name: Push Web image to ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_WEB_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_WEB_REPOSITORY }}:latest

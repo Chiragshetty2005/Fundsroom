@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 
@@ -13,8 +14,18 @@ import { usersRouter } from './routes/users.js';
 
 export const app = express();
 
-app.use(cors({ origin: env.CLIENT_ORIGIN }));
+app.use(
+  cors({
+    origin: env.CLIENT_ORIGIN,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
+
+app.get('/', (req, res) => {
+    res.status(200).json({ message: "Server up and running...." })
+})
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/customers', customerRouter);

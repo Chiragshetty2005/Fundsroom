@@ -32,8 +32,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
   }
 
-  const token = localStorage.getItem('minierp_token');
-
   const defaultHeaders: Record<string, string> = {};
 
   // Only set application/json if body is not FormData
@@ -41,11 +39,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     defaultHeaders['Content-Type'] = 'application/json';
   }
 
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(url, {
+    credentials: 'include',
     ...customConfig,
     headers: {
       ...defaultHeaders,
@@ -57,7 +52,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (!response.ok) {
     if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/signup')) {
-      localStorage.removeItem('minierp_token');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       }

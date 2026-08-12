@@ -1,13 +1,22 @@
-import { Router } from 'express';
+import { Router, type CookieOptions } from 'express';
 import { Role } from '@prisma/client';
 import { compare, hash } from 'bcryptjs';
 import { z } from 'zod';
 
+import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/jwt.js';
-import { authenticate } from '../middleware/authenticate.js';
+import { authenticate, AUTH_COOKIE_NAME } from '../middleware/authenticate.js';
 
 export const authRouter = Router();
+
+const getAuthCookieOptions = (): CookieOptions => ({
+  httpOnly: true,
+  secure: env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+  maxAge: 8 * 60 * 60 * 1000, // 8 hours in milliseconds
+});
 
 const loginSchema = z.object({
   email: z.string().email('Valid email is required.'),
@@ -46,9 +55,10 @@ authRouter.post('/signup', async (req, res, next) => {
 
     const token = signToken({ userId: user.id, role: user.role });
 
+    res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+
     res.status(201).json({
       message: 'Account created successfully.',
-      token,
       user: {
         id: user.id,
         name: user.name,
@@ -86,8 +96,10 @@ authRouter.post('/login', async (req, res, next) => {
 
     const token = signToken({ userId: user.id, role: user.role });
 
+    res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+
     res.status(200).json({
-      token,
+      message: 'Signed in successfully.',
       user: {
         id: user.id,
         name: user.name,
@@ -98,6 +110,20 @@ authRouter.post('/login', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// POST /api/auth/logout
+authRouter.post('/logout', (req, res) => {
+  res.clearCookie(AUTH_COOKIE_NAME, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  res.status(200).json({
+    message: 'Logged out successfully.',
+  });
 });
 
 // GET /api/auth/me
@@ -120,3 +146,4 @@ authRouter.get('/me', authenticate, async (req, res, next) => {
     next(error);
   }
 });
+
