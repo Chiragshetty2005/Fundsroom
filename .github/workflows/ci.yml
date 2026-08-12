@@ -47,12 +47,6 @@ jobs:
       - name: Build Web
         run: npm run build --workspace=@mini-erp/web
 
-      - name: Debug OIDC token
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: github/actions-oidc-debugger@main
-        with:
-          audience: sts.amazonaws.com
-
       - name: Configure AWS credentials
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
